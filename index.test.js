@@ -409,6 +409,37 @@ describe("Drone Client", () => {
 	});
 
 	//
+	// tests for event source streaming
+	//
+
+	describe("event streams", () => {
+		let client = new DroneClient("http://localhost", "password");
+
+		it("with endpoint", () => {
+			const sse = client.on(() => {});
+			assert(
+				sse.url() === "http://localhost/stream/events?access_token=password",
+			);
+		});
+
+		it("sends events to callback function", done => {
+			const sse = client.on(message => {
+				assert(message);
+				assert(message.login === "octocat");
+				done();
+			});
+			sse.emitMessage({ data: `{"login":"octocat"}` });
+		});
+
+		it("closes the stream on eof", () => {
+			const callback = () => {};
+			const sse = client._subscribe("", callback, {reconnect: false});
+			sse.emitError({ data: "eof" });
+			assert(sse.closed());
+		});
+	});
+
+	//
 	// tests for building query parameters
 	//
 
@@ -430,7 +461,20 @@ describe("Drone Client", () => {
 	});
 });
 
+// simple mock object for EventSource
 global.EventSource = class MockEventSource {
+	constructor(url) {
+		this._url = url;
+	}
+	url() {
+		return this._url;
+	}
+	closed() {
+		return this._closed;
+	}
+	close() {
+		this._closed = true;
+	}
 	emitError(error) {
 		this.onerror && this.onerror(error);
 	}

@@ -285,8 +285,11 @@ export default class DroneClient {
 	 * @return {EventSource} event source object.
 	 */
 	stream(owner, repo, build, proc, callback) {
-		const endpoint = `/stream/logs/${owner}/${repo}/${build}/${proc}`;
-		return this._subscribe(endpoint, callback, { reconnect: false });
+		return this._subscribe(
+			`/stream/logs/${owner}/${repo}/${build}/${proc}`,
+			callback,
+			{ reconnect: false },
+		);
 	}
 
 	_get(path) {
@@ -307,8 +310,8 @@ export default class DroneClient {
 
 	_subscribe(path, callback, opts) {
 		const query = encodeQueryString({ access_token: this.token });
-		path = !this.server ? path : `${this.server}/${path}`;
-		path = !this.token ? path : `${path}?${query}`;
+		path = this.server ? this.server + path : path;
+		path = this.token ? path + "?" + query : path;
 
 		let events = new EventSource(path);
 		events.onmessage = function(event) {
