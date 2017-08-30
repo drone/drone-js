@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha -R spec --compilers js:babel-core/register ./index.test.js",
+    "cover": "nyc --reporter=html npm test",
     "lint": "eslint index.js",
     "format": "prettier --use-tabs --trailing-comma all --write index.js"
   },
@@ -30,8 +31,10 @@
     "eslint-plugin-prettier": "^2.2.0",
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-standard": "^3.0.1",
+    "istanbul": "^0.4.5",
     "mocha": "^3.5.0",
     "prettier": "^1.6.1",
+    "sinon": "^3.2.1",
     "xhr-mock": "^1.9.0"
   }
 }
