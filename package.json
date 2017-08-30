@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha -R spec --compilers js:babel-core/register ./index.test.js",
-    "cover": "nyc --reporter=html npm test",
+    "cover": "nyc npm test",
     "lint": "eslint index.js",
     "format": "prettier --use-tabs --trailing-comma all --write index.js"
   },

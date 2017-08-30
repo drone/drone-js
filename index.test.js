@@ -6,7 +6,39 @@ import assert from "assert";
 mock.setup();
 
 describe("Drone Client", () => {
-	describe("should generate requests", () => {
+	describe("creates a new client", () => {
+		it("with options", () => {
+			let client = new DroneClient("http://localhost", "password", "123456");
+			assert(client.server === "http://localhost");
+			assert(client.token === "password");
+			assert(client.csrf === "123456");
+		});
+
+		it("from the window", () => {
+			global.window = {};
+			global.window.DRONE_SERVER = "http://drone.company.com";
+			global.window.DRONE_TOKEN = "password";
+			global.window.DRONE_CSRF = "123456";
+
+			let client = DroneClient.fromWindow();
+			assert(client.server === "http://drone.company.com");
+			assert(client.token === "password");
+			assert(client.csrf === "123456");
+		});
+
+		it("from the window", () => {
+			process.env.DRONE_SERVER = "http://drone";
+			process.env.DRONE_TOKEN = "password";
+			process.env.DRONE_CSRF = "123456";
+
+			let client = DroneClient.fromEnviron();
+			assert(client.server === "http://drone");
+			assert(client.token === "password");
+			assert(client.csrf === "123456");
+		});
+	});
+
+	describe("generate requests", () => {
 		let client = new DroneClient("http://localhost", "password", "123456");
 
 		afterEach(() => {
@@ -44,6 +76,29 @@ describe("Drone Client", () => {
 				._get()
 				.then(() => {})
 				.catch(() => {});
+		});
+	});
+
+	describe("executes http requests", () => {
+		let client = new DroneClient("http://localhost", "password", "123456");
+
+		it("unmarshals the json response", done => {
+			mock.get("http://localhost/api/user", (req, res) => {
+				return res
+					.status(200)
+					.header("Content-Type", "application/json")
+					.body(JSON.stringify({ login: "octocat" }));
+			});
+
+			client
+				.getSelf()
+				.then(user => {
+					assert(user.login === "octocat");
+					done();
+				})
+				.catch(error => {
+					done(error);
+				});
 		});
 	});
 
@@ -111,9 +166,19 @@ describe("Drone Client", () => {
 			mock.verify();
 		});
 
-		it("getBuildFeed");
+		it("getBuildFeed", () => {
+			mock.expects("_request").withArgs("GET", "/api/user/feed");
+			client.getBuildFeed();
+			mock.verify();
+		});
 
-		it("cancelBuild");
+		it("cancelBuild", () => {
+			mock
+				.expects("_request")
+				.withArgs("DELETE", "/api/repos/octocat/hello-world/builds/1/2");
+			client.cancelBuild("octocat", "hello-world", 1, 2);
+			mock.verify();
+		});
 
 		it("approveBuild", () => {
 			mock
@@ -131,13 +196,40 @@ describe("Drone Client", () => {
 			mock.verify();
 		});
 
-		it("restartBuild");
+		it("restartBuild", () => {
+			mock
+				.expects("_request")
+				.withArgs("POST", "/api/repos/octocat/hello-world/builds/1");
+			client.restartBuild("octocat", "hello-world", 1);
+			mock.verify();
+		});
 
-		it("getLogs");
+		it("getLogs", () => {
+			mock
+				.expects("_request")
+				.withArgs("GET", "/api/repos/octocat/hello-world/logs/1/2");
+			client.getLogs("octocat", "hello-world", 1, 2);
+			mock.verify();
+		});
 
-		it("getArtifact");
+		it("getArtifact", () => {
+			mock
+				.expects("_request")
+				.withArgs(
+					"GET",
+					"/api/repos/octocat/hello-world/files/1/2/foo/bar.baz?raw=true",
+				);
+			client.getArtifact("octocat", "hello-world", 1, 2, "foo/bar.baz");
+			mock.verify();
+		});
 
-		it("getArtifactList");
+		it("getArtifactList", () => {
+			mock
+				.expects("_request")
+				.withArgs("GET", "/api/repos/octocat/hello-world/files/1");
+			client.getArtifactList("octocat", "hello-world", 1);
+			mock.verify();
+		});
 
 		it("getSecretList", () => {
 			mock
@@ -207,25 +299,4 @@ describe("Drone Client", () => {
 			mock.verify();
 		});
 	});
-
-	// describe("getSelf", () => {
-	// 	it("should fetch the user without error", done => {
-	// 		mock.get("http://localhost/api/user", (req, res) => {
-	// 			return res
-	// 				.status(200)
-	// 				.header("Content-Type", "application/json")
-	// 				.body(JSON.stringify({ login: "octocat" }));
-	// 		});
-	//
-	// 		client
-	// 			.getSelf()
-	// 			.then(user => {
-	// 				assert(user.login === "octocat");
-	// 				done();
-	// 			})
-	// 			.catch(error => {
-	// 				done(error);
-	// 			});
-	// 	});
-	// });
 });
