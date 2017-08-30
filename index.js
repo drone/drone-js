@@ -32,69 +32,69 @@ export default class DroneClient {
 
 	/**
 	 * Returns the repository by owner and name.
+	 *
 	 * @param {string} repository owner.
 	 * @param {string} repository name.
 	 */
 	getRepo(owner, repo) {
-		var endpoint = ["/api/repos", owner, repo].join("/");
-		return this._get(endpoint);
+		return this._get(`/api/repos/${owner}/${repo}`);
 	}
 
 	/**
 	 * Activates the repository by owner and name.
+	 *
 	 * @param {string} repository owner.
 	 * @param {string} repository name.
 	 */
 	activateRepo(owner, repo) {
-		var endpoint = ["/api/repos", owner, repo].join("/");
-		return this._post(endpoint);
+		return this._post(`/api/repos/${owner}/${repo}`);
 	}
 
 	/**
 	 * Updates the repository.
+	 *
 	 * @param {string} repository owner.
 	 * @param {string} repository name.
 	 * @param {Object} repository data.
 	 */
 	updateRepo(owner, repo, data) {
-		var endpoint = ["/api/repos", owner, repo].join("/");
-		return this._patch(endpoint, data);
+		return this._patch(`/api/repos/${owner}/${repo}`, data);
 	}
 
 	/**
 	 * Deletes the repository by owner and name.
+	 *
 	 * @param {string} repository owner.
 	 * @param {string} repository name.
 	 */
 	deleteRepo(owner, repo) {
-		var endpoint = ["/api/repos", owner, repo].join("/");
-		return this._delete(endpoint);
+		return this._delete(`/api/repos/${owner}/${repo}`);
 	}
 
 	/**
 	 * Returns the build list for the given repository.
+	 *
 	 * @param {string} repository owner.
 	 * @param {string} repository name.
-	 * @param {Object} request options.
 	 */
-	getBuildList(owner, repo, opts) {
-		var endpoint = ["/api/repos", owner, repo, "builds"].join("/");
-		return this._get(endpoint);
+	getBuildList(owner, repo) {
+		return this._get(`/api/repos/${owner}/${repo}/builds`);
 	}
 
 	/**
 	 * Returns the build by number for the given repository.
+	 *
 	 * @param {string} repository owner.
 	 * @param {string} repository name.
 	 * @param {number} build number.
 	 */
 	getBuild(owner, repo, number) {
-		var endpoint = ["/api/repos", owner, repo, "builds", number].join("/");
-		return this._get(endpoint);
+		return this._get(`/api/repos/${owner}/${repo}/builds/${number}`);
 	}
 
 	/**
 	 * returns the build feed for the user account.
+	 *
 	 * @param {Object} request options.
 	 */
 	getBuildFeed(opts) {
@@ -105,56 +105,41 @@ export default class DroneClient {
 
 	/**
 	 * Cancels the build by number for the given repository.
+	 *
 	 * @param {string} repository owner.
 	 * @param {string} repository name.
 	 * @param {number} build number.
 	 * @param {number} process number.
 	 */
 	cancelBuild(owner, repo, number, ppid) {
-		var endpoint = ["/api/repos", owner, repo, "builds", number, ppid].join(
-			"/",
-		);
-		return this._delete(endpoint);
+		return this._delete(`/api/repos/${owner}/${repo}/builds/${number}/${ppid}`);
 	}
 
 	/**
 	 * Approves the build.
+	 *
 	 * @param {string} repository owner.
 	 * @param {string} repository name.
 	 * @param {number} build number.
 	 */
-	approveBuild(owner, repo, number) {
-		var endpoint = [
-			"/api/repos",
-			owner,
-			repo,
-			"builds",
-			number,
-			"approve",
-		].join("/");
-		return this._post(endpoint);
+	approveBuild(owner, repo, build) {
+		return this._post(`/api/repos/${owner}/${repo}/builds/${build}/approve`);
 	}
 
 	/**
 	 * Approves the build.
+	 *
 	 * @param {string} repository owner.
 	 * @param {string} repository name.
 	 * @param {number} build number.
 	 */
-	declineBuild(owner, repo, number) {
-		var endpoint = [
-			"/api/repos",
-			owner,
-			repo,
-			"builds",
-			number,
-			"decline",
-		].join("/");
-		return this._post(endpoint);
+	declineBuild(owner, repo, build) {
+		return this._post(`/api/repos/${owner}/${repo}/builds/${build}/decline`);
 	}
 
 	/**
 	 * Restarts the build by number for the given repository.
+	 *
 	 * @param {string} repository owner.
 	 * @param {string} repository name.
 	 * @param {number} build number.
@@ -169,78 +154,82 @@ export default class DroneClient {
 
 	/**
 	 * Returns the build by number for the given repository.
+	 *
 	 * @param {string} repository owner.
 	 * @param {string} repository name.
 	 * @param {number} build number.
 	 * @param {number} proc number.
 	 */
 	getLogs(owner, repo, build, proc) {
-		var endpoint = ["/api/repos", owner, repo, "logs", build, proc].join("/");
-		return this._get(endpoint);
+		return this._get(`/api/repos/${owner}/${repo}/logs/${build}/${proc}`);
 	}
 
 	/**
 	 * Returns the build artifact.
+	 *
 	 * @param {string} repository owner.
 	 * @param {string} repository name.
 	 * @param {number} build number.
 	 * @param {number} process number.
 	 * @param {String} file name.
 	 */
-	getArtifact(owner, repo, number, proc, file) {
-		var endpoint =
-			["/api/repos", owner, repo, "files", number, proc, file].join("/") +
-			"?raw=true";
-		return this._get(endpoint);
+	getArtifact(owner, repo, build, proc, file) {
+		return this._get(
+			`/api/repos/${owner}/${repo}/files/${build}/${proc}/${file}?raw=true`,
+		);
 	}
 
 	/**
 	 * Returns the build artifact.
+	 *
 	 * @param {string} repository owner.
 	 * @param {string} repository name.
 	 * @param {number} build number.
 	 */
-	getArtifactList(owner, repo, number) {
-		var endpoint = ["/api/repos", owner, repo, "files", number].join("/");
-		return this._get(endpoint);
+	getArtifactList(owner, repo, build) {
+		return this._get(`/api/repos/${owner}/${repo}/files/${build}`);
 	}
 
 	/**
 	 * Returns the repository secret list.
+	 *
+	 * @param {string} repository owner.
+	 * @param {string} repository name.
 	 */
 	getSecretList(owner, repo) {
-		var endpoint = ["/api/repos", owner, repo, "secrets"].join("/");
-		return this._get(endpoint);
+		return this._get(`/api/repos/${owner}/${repo}/secrets`);
 	}
 
 	/**
 	 * Create the named registry.
+	 *
 	 * @param {string} repository owner.
 	 * @param {string} repository name.
 	 * @param {Object} secret details.
 	 */
 	createSecret(owner, repo, secret) {
-		var endpoint = ["/api/repos", owner, repo, "secrets"].join("/");
-		return this._post(endpoint, secret);
+		return this._post(`/api/repos/${owner}/${repo}/secrets`, secret);
 	}
 
 	/**
 	 * Deletes the named repository secret.
+	 *
 	 * @param {string} repository owner.
 	 * @param {string} repository name.
 	 * @param {string} secret name.
 	 */
 	deleteSecret(owner, repo, secret) {
-		var endpoint = ["/api/repos", owner, repo, "secrets", secret].join("/");
-		return this._delete(endpoint);
+		return this._delete(`/api/repos/${owner}/${repo}/secrets/${secret}`);
 	}
 
 	/**
 	 * Returns the repository registry list.
+	 *
+	 * @param {string} repository owner.
+	 * @param {string} repository name.
 	 */
 	getRegistryList(owner, repo) {
-		var endpoint = ["/api/repos", owner, repo, "registry"].join("/");
-		return this._get(endpoint);
+		return this._get(`/api/repos/${owner}/${repo}/registry`);
 	}
 
 	/**
@@ -250,8 +239,7 @@ export default class DroneClient {
 	 * @param {number} registry details.
 	 */
 	createRegistry(owner, repo, registry) {
-		var endpoint = ["/api/repos", owner, repo, "registry"].join("/");
-		return this._post(endpoint, registry);
+		return this._post(`/api/repos/${owner}/${repo}/registry`, registry);
 	}
 
 	/**
@@ -261,8 +249,7 @@ export default class DroneClient {
 	 * @param {number} registry address.
 	 */
 	deleteRegistry(owner, repo, address) {
-		var endpoint = ["/api/repos", owner, repo, "registry", address].join("/");
-		return this._delete(endpoint);
+		return this._delete(`/api/repos/${owner}/${repo}/registry/${address}`);
 	}
 
 	/**
