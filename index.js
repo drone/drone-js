@@ -422,7 +422,7 @@ export default class DroneClient {
 		return new Promise(
 			function(resolve, reject) {
 				xhr.onload = function() {
-					if (xhr.readyState === xhr.DONE) {
+					if (xhr.readyState === 4) {
 						if (xhr.status >= 300) {
 							const error = {
 								status: xhr.status,

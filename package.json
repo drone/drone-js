@@ -4,6 +4,7 @@
   "description": "sdk for the drone continuous integration server",
   "main": "index.js",
   "scripts": {
+    "test": "mocha -R spec --compilers js:babel-core/register ./index.test.js",
     "lint": "eslint index.js",
     "format": "prettier --use-tabs --trailing-comma all --write index.js"
   },
@@ -18,6 +19,9 @@
   },
   "homepage": "https://github.com/drone/drone-js#readme",
   "devDependencies": {
+    "babel": "^6.23.0",
+    "babel-core": "^6.26.0",
+    "babel-preset-es2015": "^6.24.1",
     "eslint": "^4.5.0",
     "eslint-config-prettier": "^2.3.0",
     "eslint-config-standard": "^10.2.1",
@@ -26,6 +30,8 @@
     "eslint-plugin-prettier": "^2.2.0",
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-standard": "^3.0.1",
-    "prettier": "^1.6.1"
+    "mocha": "^3.5.0",
+    "prettier": "^1.6.1",
+    "xhr-mock": "^1.9.0"
   }
 }
