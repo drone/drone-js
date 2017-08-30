@@ -25,9 +25,8 @@ export default class DroneClient {
 	 * Returns the user repository list.
 	 */
 	getRepoList(opts) {
-		var query = this._query(opts);
-		var endpoint = ["/api/user/repos", query].join("");
-		return this._get(endpoint);
+		const query = encodeQueryString(opts);
+		return this._get(`/api/user/repos?${query}`);
 	}
 
 	/**
@@ -98,9 +97,8 @@ export default class DroneClient {
 	 * @param {Object} request options.
 	 */
 	getBuildFeed(opts) {
-		var query = this._query(opts);
-		var endpoint = ["/api/user/feed", query].join("");
-		return this._get(endpoint);
+		const query = encodeQueryString(opts);
+		return this._get(`/api/user/feed?${query}`);
 	}
 
 	/**
@@ -145,11 +143,9 @@ export default class DroneClient {
 	 * @param {number} build number.
 	 * @param {Object} request options
 	 */
-	restartBuild(owner, repo, number, opts) {
-		var query = this._query(opts);
-		var endpoint = ["/api/repos", owner, repo, "builds", number].join("/");
-		endpoint = [endpoint, query].join("");
-		return this._post(endpoint);
+	restartBuild(owner, repo, build, opts) {
+		const query = encodeQueryString(opts);
+		return this._post(`/api/repos/${owner}/${repo}/builds/${build}?${query}`);
 	}
 
 	/**
@@ -311,97 +307,28 @@ export default class DroneClient {
 		return events;
 	}
 
-	/**
-	 * Returns a Promise for an XHR GET request.
-	 * @private
-	 * @param {string} request path.
-	*/
 	_get(path) {
 		return this._request("GET", path, null);
 	}
 
-	/**
-	 * Returns a Promise for an XHR POST request.
-	 * @private
-	 * @param {string} request path.
-	 * @param {Object} request data.
-	*/
 	_post(path, data) {
 		return this._request("POST", path, data);
 	}
 
-	/**
-	 * Returns a Promise for an XHR PUT request.
-	 * @private
-	 * @param {string} request path.
-	 * @param {Object} request data.
-	*/
-	_put(path, data) {
-		return this._request("PUT", path, data);
-	}
-
-	/**
-	 * Returns a Promise for an XHR PATCH request.
-	 * @private
-	 * @param {string} request path.
-	 * @param {Object} request data.
-	*/
 	_patch(path, data) {
 		return this._request("PATCH", path, data);
 	}
 
-	/**
-	 * Returns a Promise for an XHR DELETE request.
-	 * @private
-	 * @param {string} request path.
-	 */
 	_delete(path) {
 		return this._request("DELETE", path, null);
 	}
 
-	/**
-	 * Returns a query string from the given parameters.
-	 * @param {Object} query parameters in key value object.
-	 * @return {string} query string.
-	 */
-	_query(opts) {
-		if (!opts) return;
-		var query = [];
-		for (var key in opts) {
-			var value = opts[key];
-			query.push(
-				[encodeURIComponent(key), encodeURIComponent(value)].join("="),
-			);
-		}
-		return query.length === 0 ? "" : "?" + query.join("&");
-	}
-
-	/**
-	 * Returns true if the XHR response is a JSON document.
-	 * @private
-	 * @param {Object} XHR response.
-	 */
-	_isJSON(xhr) {
-		return (
-			xhr.getResponseHeader("Content-Type").indexOf("json") !== -1 ||
-			xhr.response.startsWith("{") || // HACK remove
-			xhr.response.startsWith("[")
-		); // HACK remove
-	}
-
-	/**
-	 * Returns a Promise for an XHR request.
-	 * @private
-	 * @param {string} request method.
-	 * @param {string} request path.
-	 * @param {Object} request data.
-	 */
 	_request(method, path, data) {
 		var endpoint = [this.server, path].join("");
 		var xhr = new XMLHttpRequest();
 		xhr.open(method, endpoint, true);
 		if (this.token) {
-			xhr.setRequestHeader("Authorization", "Bearer " + this.token);
+			xhr.setRequestHeader("Authorization", `Bearer ${this.token}`);
 		}
 		if (method !== "GET" && this.csrf) {
 			xhr.setRequestHeader("X-CSRF-TOKEN", this.csrf);
@@ -419,14 +346,17 @@ export default class DroneClient {
 								this.onerror(error);
 							}
 							reject(error);
-						} else if (this._isJSON(xhr)) {
+							return;
+						}
+						const contentType = xhr.getResponseHeader("Content-Type");
+						if (contentType === "application/json") {
 							resolve(JSON.parse(xhr.response));
 						} else {
 							resolve(xhr.response);
 						}
 					}
 				}.bind(this);
-				xhr.onerror = function(e) {
+				xhr.onerror = e => {
 					reject(e);
 				};
 				if (data) {
@@ -439,3 +369,21 @@ export default class DroneClient {
 		);
 	}
 }
+
+/**
+ * Encodes the values into url encoded form sorted by key.
+ *
+ * @param {object} query parameters in key value object.
+ * @return {string} query parameter string
+ */
+export const encodeQueryString = params => {
+	return params
+		? Object.keys(params)
+				.sort()
+				.map(key => {
+					const val = params[key];
+					return encodeURIComponent(key) + "=" + encodeURIComponent(val);
+				})
+				.join("&")
+		: "";
+};

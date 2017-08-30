@@ -1,4 +1,4 @@
-import DroneClient from "./index";
+import DroneClient, { encodeQueryString } from "./index";
 import mock from "xhr-mock";
 import sinon from "sinon";
 import assert from "assert";
@@ -38,71 +38,7 @@ describe("Drone Client", () => {
 		});
 	});
 
-	describe("generate requests", () => {
-		let client = new DroneClient("http://localhost", "password", "123456");
-
-		afterEach(() => {
-			mock.reset();
-		});
-
-		it("with the token header", done => {
-			mock.get(/.*/, (req, res) => {
-				assert(req.header("Authorization") === "Bearer password");
-				done();
-			});
-			client
-				._get()
-				.then(() => {})
-				.catch(() => {});
-		});
-
-		it("with the csrf header", done => {
-			mock.post(/.*/, (req, res) => {
-				assert(req.header("X-CSRF-TOKEN") === "123456");
-				done();
-			});
-			client
-				._post()
-				.then(() => {})
-				.catch(() => {});
-		});
-
-		it("without the csrf header for GET", done => {
-			mock.get(/.*/, (req, res) => {
-				assert(!req.header("X-CSRF-TOKEN"));
-				done();
-			});
-			client
-				._get()
-				.then(() => {})
-				.catch(() => {});
-		});
-	});
-
-	describe("executes http requests", () => {
-		let client = new DroneClient("http://localhost", "password", "123456");
-
-		it("unmarshals the json response", done => {
-			mock.get("http://localhost/api/user", (req, res) => {
-				return res
-					.status(200)
-					.header("Content-Type", "application/json")
-					.body(JSON.stringify({ login: "octocat" }));
-			});
-
-			client
-				.getSelf()
-				.then(user => {
-					assert(user.login === "octocat");
-					done();
-				})
-				.catch(error => {
-					done(error);
-				});
-		});
-	});
-
-	describe("should generate api endpoints", () => {
+	describe("generates api endpoints", () => {
 		let client;
 		let mock;
 
@@ -120,8 +56,8 @@ describe("Drone Client", () => {
 		});
 
 		it("getRepoList", () => {
-			mock.expects("_request").withArgs("GET", "/api/user/repos");
-			client.getRepoList();
+			mock.expects("_request").withArgs("GET", "/api/user/repos?all=true");
+			client.getRepoList({ all: true });
 			mock.verify();
 		});
 
@@ -167,8 +103,8 @@ describe("Drone Client", () => {
 		});
 
 		it("getBuildFeed", () => {
-			mock.expects("_request").withArgs("GET", "/api/user/feed");
-			client.getBuildFeed();
+			mock.expects("_request").withArgs("GET", "/api/user/feed?latest=true");
+			client.getBuildFeed({ latest: true });
 			mock.verify();
 		});
 
@@ -199,8 +135,8 @@ describe("Drone Client", () => {
 		it("restartBuild", () => {
 			mock
 				.expects("_request")
-				.withArgs("POST", "/api/repos/octocat/hello-world/builds/1");
-			client.restartBuild("octocat", "hello-world", 1);
+				.withArgs("POST", "/api/repos/octocat/hello-world/builds/1?fork=true");
+			client.restartBuild("octocat", "hello-world", 1, { fork: true });
 			mock.verify();
 		});
 
@@ -297,6 +233,142 @@ describe("Drone Client", () => {
 			mock.expects("_request").withArgs("POST", "/api/user/token");
 			client.getToken();
 			mock.verify();
+		});
+	});
+
+	describe("generate requests", () => {
+		let client = new DroneClient("http://localhost", "password", "123456");
+
+		afterEach(() => {
+			mock.reset();
+		});
+
+		it("with the token header", done => {
+			mock.get(/.*/, (req, res) => {
+				assert(req.header("Authorization") === "Bearer password");
+				done();
+			});
+			client
+				._get()
+				.then(() => {})
+				.catch(() => {});
+		});
+
+		it("with the csrf header", done => {
+			mock.post(/.*/, (req, res) => {
+				assert(req.header("X-CSRF-TOKEN") === "123456");
+				done();
+			});
+			client
+				._post()
+				.then(() => {})
+				.catch(() => {});
+		});
+
+		it("without the csrf header for GET", done => {
+			mock.get(/.*/, (req, res) => {
+				assert(!req.header("X-CSRF-TOKEN"));
+				done();
+			});
+			client
+				._get()
+				.then(() => {})
+				.catch(() => {});
+		});
+
+		it("with the json body", done => {
+			mock.post(/.*/, (req, res) => {
+				assert(req.header("Content-Type") === "application/json");
+				assert(req.body() === `{"ping":"pong"}`);
+				done();
+			});
+			client
+				._post("http://localhost", { ping: "pong" })
+				.then(() => {})
+				.catch(() => {});
+		});
+	});
+
+	describe("executes http requests", () => {
+		let client = new DroneClient("http://localhost", "password", "123456");
+
+		afterEach(() => {
+			mock.reset();
+		});
+
+		it("unmarshals the json response", done => {
+			mock.get("http://localhost/api/user", (req, res) => {
+				return res
+					.status(200)
+					.header("Content-Type", "application/json")
+					.body(JSON.stringify({ login: "octocat" }));
+			});
+
+			client
+				.getSelf()
+				.then(user => {
+					assert(user.login === "octocat");
+					done();
+				})
+				.catch(error => {
+					done(error);
+				});
+		});
+
+		it("unmarshals a plain text response", done => {
+			mock.post("http://localhost/api/user/token", (req, res) => {
+				return res
+					.status(200)
+					.header("Content-Type", "text/plain")
+					.body("ZG9udCBnYWluIHRoZSB3b3JsZCBhbmQgbG9zZSB5b3VyIHNvdWw=");
+			});
+
+			client
+				.getToken()
+				.then(user => {
+					assert("ZG9udCBnYWluIHRoZSB3b3JsZCBhbmQgbG9zZSB5b3VyIHNvdWw=");
+					done();
+				})
+				.catch(error => {
+					done(error);
+				});
+		});
+
+		it("handles an error response", done => {
+			mock.get("http://localhost/api/user", (req, res) => {
+				return res
+					.status(403)
+					.header("Content-Type", "plain/text")
+					.body("Not Authorized");
+			});
+
+			client
+				.getSelf()
+				.then(user => {
+					done("expect error response");
+				})
+				.catch(error => {
+					assert(error);
+					assert(error.status === 403);
+					done();
+				});
+		});
+	});
+
+	describe("encodes query paraemeters", () => {
+		it("handles no parameters", () => {
+			assert(encodeQueryString() === "");
+			assert(encodeQueryString({}) === "");
+			assert(encodeQueryString(null) === "");
+			assert(encodeQueryString(undefined) === "");
+		});
+
+		it("sorts parameters", () => {
+			assert(encodeQueryString({ b: "b", a: "a" }) === "a=a&b=b");
+		});
+
+		it("returns an encoded string", () => {
+			assert(encodeQueryString({ hello: "world" }) === "hello=world");
 		});
 	});
 });
