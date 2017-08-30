@@ -6,6 +6,10 @@ import assert from "assert";
 mock.setup();
 
 describe("Drone Client", () => {
+	//
+	// tests for client creation
+	//
+
 	describe("creates a new client", () => {
 		it("with options", () => {
 			let client = new DroneClient("http://localhost", "password", "123456");
@@ -37,6 +41,10 @@ describe("Drone Client", () => {
 			assert(client.csrf === "123456");
 		});
 	});
+
+	//
+	// tests for individual API calls
+	//
 
 	describe("generates api endpoints", () => {
 		let client;
@@ -234,7 +242,29 @@ describe("Drone Client", () => {
 			client.getToken();
 			mock.verify();
 		});
+
+		it("on", () => {
+			const callback = () => {};
+			const options = { reconnect: true };
+			mock.expects("_subscribe").withArgs("/stream/events", callback, options);
+			client.on(callback);
+			mock.verify();
+		});
+
+		it("stream", () => {
+			const callback = () => {};
+			const options = { reconnect: false };
+			mock
+				.expects("_subscribe")
+				.withArgs("/stream/logs/octocat/hello-world/1/2", callback, options);
+			client.stream("octocat", "hello-world", 1, 2, callback);
+			mock.verify();
+		});
 	});
+
+	//
+	// test for http request creation
+	//
 
 	describe("generate requests", () => {
 		let client = new DroneClient("http://localhost", "password", "123456");
@@ -288,6 +318,10 @@ describe("Drone Client", () => {
 				.catch(() => {});
 		});
 	});
+
+	//
+	// tests for http request execution
+	//
 
 	describe("executes http requests", () => {
 		let client = new DroneClient("http://localhost", "password", "123456");
@@ -350,10 +384,33 @@ describe("Drone Client", () => {
 				.catch(error => {
 					assert(error);
 					assert(error.status === 403);
+					assert(error.message === "Not Authorized");
 					done();
 				});
 		});
+
+		it("send error notifications to the listener", done => {
+			mock.get("http://localhost/api/user", (req, res) => {
+				return res
+					.status(403)
+					.header("Content-Type", "plain/text")
+					.body("Not Authorized");
+			});
+			client.onerror = error => {
+				assert(error.status === 403);
+				assert(error.message === "Not Authorized");
+				done();
+			};
+			client
+				.getSelf()
+				.then(() => {})
+				.catch(() => {});
+		});
 	});
+
+	//
+	// tests for building query parameters
+	//
 
 	describe("encodes query paraemeters", () => {
 		it("handles no parameters", () => {
@@ -372,3 +429,12 @@ describe("Drone Client", () => {
 		});
 	});
 });
+
+global.EventSource = class MockEventSource {
+	emitError(error) {
+		this.onerror && this.onerror(error);
+	}
+	emitMessage(message) {
+		this.onmessage && this.onmessage(message);
+	}
+};

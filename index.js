@@ -266,45 +266,27 @@ export default class DroneClient {
 	 * Subscribes to a server-side event feed and emits
 	 * events to the callback receiver.
 	 *
-	 * @param {Function} callback function
-	 * @return {Object} websocket
+	 * @param {function} callback function
+	 * @return {EventSource} event source object.
 	 */
-	on(receiver) {
-		var endpoint = [this.server, "/stream/events"].join("");
-		endpoint = this.token ? endpoint + "?access_token=" + this.token : endpoint;
-
-		var events = new EventSource(endpoint);
-		events.onmessage = function(event) {
-			var data = JSON.parse(event.data);
-			receiver(data);
-		};
-		return events;
+	on(callback) {
+		return this._subscribe("/stream/events", callback, { reconnect: true });
 	}
 
 	/*
 	 * Subscribes to an server-side event feed and emits
 	 * events to the callback receiver.
 	 *
-	 * @param {Function} callback function
-	 * @return {Object} websocket
+	 * @param {string} repository owner.
+	 * @param {string} repository name.
+	 * @param {number} build number.
+	 * @param {number} process number.
+	 * @param {function} callback function.
+	 * @return {EventSource} event source object.
 	 */
-	stream(owner, repo, build, proc, receiver) {
-		var endpoint = [this.server, "stream/logs", owner, repo, build, proc].join(
-			"/",
-		);
-		endpoint = this.token ? endpoint + "?access_token=" + this.token : endpoint;
-
-		var events = new EventSource(endpoint);
-		events.onerror = function(err) {
-			if (err.data === "eof") {
-				events.close();
-			}
-		};
-		events.onmessage = function(event) {
-			var data = JSON.parse(event.data);
-			receiver(data);
-		};
-		return events;
+	stream(owner, repo, build, proc, callback) {
+		const endpoint = `/stream/logs/${owner}/${repo}/${build}/${proc}`;
+		return this._subscribe(endpoint, callback, { reconnect: false });
 	}
 
 	_get(path) {
@@ -321,6 +303,26 @@ export default class DroneClient {
 
 	_delete(path) {
 		return this._request("DELETE", path, null);
+	}
+
+	_subscribe(path, callback, opts) {
+		const query = encodeQueryString({ access_token: this.token });
+		path = !this.server ? path : `${this.server}/${path}`;
+		path = !this.token ? path : `${path}?${query}`;
+
+		let events = new EventSource(path);
+		events.onmessage = function(event) {
+			var data = JSON.parse(event.data);
+			callback(data);
+		};
+		if (!opts.reconnect) {
+			events.onerror = function(err) {
+				if (err.data === "eof") {
+					events.close();
+				}
+			};
+		}
+		return events;
 	}
 
 	_request(method, path, data) {
