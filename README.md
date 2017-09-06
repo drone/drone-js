@@ -39,4 +39,6 @@ Package commands:
 ```sh
 npm run lint   # lint the codebase
 npm run format # format the codebase
+npm run test   # runs the unit tests
+npm run build  # generate the bundle
 ```

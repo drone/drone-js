@@ -1,6 +1,6 @@
 {
   "name": "drone-js",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Javascript client for the Drone API",
   "main": "lib/index.js",
   "scripts": {
@@ -11,7 +11,6 @@
     "lint": "eslint index.js",
     "format": "prettier --use-tabs --trailing-comma all --write *.js"
   },
-
   "files": [
     "lib/index.js"
   ],
