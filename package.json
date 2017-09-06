@@ -11,6 +11,10 @@
     "lint": "eslint index.js",
     "format": "prettier --use-tabs --trailing-comma all --write *.js"
   },
+
+  "files": [
+    "lib/index.js"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/drone/drone-js.git"
