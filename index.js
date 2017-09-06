@@ -354,7 +354,7 @@ export default class DroneClient {
 							return;
 						}
 						const contentType = xhr.getResponseHeader("Content-Type");
-						if (contentType === "application/json") {
+						if (contentType && contentType.startsWith("application/json")) {
 							resolve(JSON.parse(xhr.response));
 						} else {
 							resolve(xhr.response);

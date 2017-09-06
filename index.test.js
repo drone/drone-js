@@ -334,7 +334,7 @@ describe("Drone Client", () => {
 			mock.get("http://localhost/api/user", (req, res) => {
 				return res
 					.status(200)
-					.header("Content-Type", "application/json")
+					.header("Content-Type", "application/json; utf-8")
 					.body(JSON.stringify({ login: "octocat" }));
 			});
 
@@ -433,7 +433,7 @@ describe("Drone Client", () => {
 
 		it("closes the stream on eof", () => {
 			const callback = () => {};
-			const sse = client._subscribe("", callback, {reconnect: false});
+			const sse = client._subscribe("", callback, { reconnect: false });
 			sse.emitError({ data: "eof" });
 			assert(sse.closed());
 		});
