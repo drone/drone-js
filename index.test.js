@@ -97,8 +97,8 @@ describe("Drone Client", () => {
 		it("getBuildList", () => {
 			mock
 				.expects("_request")
-				.withArgs("GET", "/api/repos/octocat/hello-world/builds");
-			client.getBuildList("octocat", "hello-world");
+				.withArgs("GET", "/api/repos/octocat/hello-world/builds?page=1");
+			client.getBuildList("octocat", "hello-world", { page: 1 });
 			mock.verify();
 		});
 

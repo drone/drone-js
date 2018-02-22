@@ -75,9 +75,11 @@ export default class DroneClient {
 	 *
 	 * @param {string} repository owner.
 	 * @param {string} repository name.
+	 * @param {Object} request options.
 	 */
-	getBuildList(owner, repo) {
-		return this._get(`/api/repos/${owner}/${repo}/builds`);
+	getBuildList(owner, repo, opts) {
+		const query = encodeQueryString(opts);
+		return this._get(`/api/repos/${owner}/${repo}/builds?${query}`);
 	}
 
 	/**
@@ -141,7 +143,7 @@ export default class DroneClient {
 	 * @param {string} repository owner.
 	 * @param {string} repository name.
 	 * @param {number} build number.
-	 * @param {Object} request options
+	 * @param {Object} request options.
 	 */
 	restartBuild(owner, repo, build, opts) {
 		const query = encodeQueryString(opts);
@@ -270,7 +272,9 @@ export default class DroneClient {
 	 * @return {EventSource} event source object.
 	 */
 	on(callback) {
-		return this._subscribe("/stream/events", callback, { reconnect: true });
+		return this._subscribe("/stream/events", callback, {
+			reconnect: true,
+		});
 	}
 
 	/*
@@ -288,7 +292,9 @@ export default class DroneClient {
 		return this._subscribe(
 			`/stream/logs/${owner}/${repo}/${build}/${proc}`,
 			callback,
-			{ reconnect: false },
+			{
+				reconnect: false,
+			},
 		);
 	}
 
@@ -309,7 +315,9 @@ export default class DroneClient {
 	}
 
 	_subscribe(path, callback, opts) {
-		const query = encodeQueryString({ access_token: this.token });
+		const query = encodeQueryString({
+			access_token: this.token,
+		});
 		path = this.server ? this.server + path : path;
 		path = this.token ? path + "?" + query : path;
 
@@ -381,7 +389,7 @@ export default class DroneClient {
  * @param {object} query parameters in key value object.
  * @return {string} query parameter string
  */
-export const encodeQueryString = params => {
+export const encodeQueryString = (params = {}) => {
 	return params
 		? Object.keys(params)
 				.sort()
