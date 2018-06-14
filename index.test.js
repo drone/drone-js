@@ -29,17 +29,6 @@ describe("Drone Client", () => {
 			assert(client.token === "password");
 			assert(client.csrf === "123456");
 		});
-
-		it("from the window", () => {
-			process.env.DRONE_SERVER = "http://drone";
-			process.env.DRONE_TOKEN = "password";
-			process.env.DRONE_CSRF = "123456";
-
-			let client = DroneClient.fromEnviron();
-			assert(client.server === "http://drone");
-			assert(client.token === "password");
-			assert(client.csrf === "123456");
-		});
 	});
 
 	//
@@ -119,24 +108,24 @@ describe("Drone Client", () => {
 		it("cancelBuild", () => {
 			mock
 				.expects("_request")
-				.withArgs("DELETE", "/api/repos/octocat/hello-world/builds/1/2");
-			client.cancelBuild("octocat", "hello-world", 1, 2);
+				.withArgs("DELETE", "/api/repos/octocat/hello-world/builds/1");
+			client.cancelBuild("octocat", "hello-world", 1);
 			mock.verify();
 		});
 
 		it("approveBuild", () => {
 			mock
 				.expects("_request")
-				.withArgs("POST", "/api/repos/octocat/hello-world/builds/1/approve");
-			client.approveBuild("octocat", "hello-world", 1);
+				.withArgs("POST", "/api/repos/octocat/hello-world/builds/1/approve/2");
+			client.approveBuild("octocat", "hello-world", 1, 2);
 			mock.verify();
 		});
 
 		it("declineBuild", () => {
 			mock
 				.expects("_request")
-				.withArgs("POST", "/api/repos/octocat/hello-world/builds/1/decline");
-			client.declineBuild("octocat", "hello-world", 1);
+				.withArgs("POST", "/api/repos/octocat/hello-world/builds/1/decline/2");
+			client.declineBuild("octocat", "hello-world", 1, 2);
 			mock.verify();
 		});
 
@@ -151,27 +140,8 @@ describe("Drone Client", () => {
 		it("getLogs", () => {
 			mock
 				.expects("_request")
-				.withArgs("GET", "/api/repos/octocat/hello-world/logs/1/2");
-			client.getLogs("octocat", "hello-world", 1, 2);
-			mock.verify();
-		});
-
-		it("getArtifact", () => {
-			mock
-				.expects("_request")
-				.withArgs(
-					"GET",
-					"/api/repos/octocat/hello-world/files/1/2/foo/bar.baz?raw=true",
-				);
-			client.getArtifact("octocat", "hello-world", 1, 2, "foo/bar.baz");
-			mock.verify();
-		});
-
-		it("getArtifactList", () => {
-			mock
-				.expects("_request")
-				.withArgs("GET", "/api/repos/octocat/hello-world/files/1");
-			client.getArtifactList("octocat", "hello-world", 1);
+				.withArgs("GET", "/api/repos/octocat/hello-world/builds/1/logs/2/3");
+			client.getLogs("octocat", "hello-world", 1, 2, 3);
 			mock.verify();
 		});
 
@@ -246,7 +216,7 @@ describe("Drone Client", () => {
 		it("on", () => {
 			const callback = () => {};
 			const options = { reconnect: true };
-			mock.expects("_subscribe").withArgs("/stream/events", callback, options);
+			mock.expects("_subscribe").withArgs("/api/stream", callback, options);
 			client.on(callback);
 			mock.verify();
 		});
@@ -256,8 +226,8 @@ describe("Drone Client", () => {
 			const options = { reconnect: false };
 			mock
 				.expects("_subscribe")
-				.withArgs("/stream/logs/octocat/hello-world/1/2", callback, options);
-			client.stream("octocat", "hello-world", 1, 2, callback);
+				.withArgs("/api/stream/octocat/hello-world/1/2/3", callback, options);
+			client.stream("octocat", "hello-world", 1, 2, 3, callback);
 			mock.verify();
 		});
 	});
@@ -418,7 +388,7 @@ describe("Drone Client", () => {
 		it("with endpoint", () => {
 			const sse = client.on(() => {});
 			assert(
-				sse.url() === "http://localhost/stream/events?access_token=password",
+				sse.url() === "http://localhost/api/stream?access_token=password",
 			);
 		});
 

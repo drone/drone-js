@@ -5,14 +5,6 @@ export default class DroneClient {
 		this.csrf = csrf;
 	}
 
-	static fromEnviron() {
-		return new DroneClient(
-			process && process.env && process.env.DRONE_SERVER,
-			process && process.env && process.env.DRONE_TOKEN,
-			process && process.env && process.env.DRONE_CSRF,
-		);
-	}
-
 	static fromWindow() {
 		return new DroneClient(
 			window && window.DRONE_SERVER,
@@ -109,10 +101,9 @@ export default class DroneClient {
 	 * @param {string} repository owner.
 	 * @param {string} repository name.
 	 * @param {number} build number.
-	 * @param {number} process number.
 	 */
-	cancelBuild(owner, repo, number, ppid) {
-		return this._delete(`/api/repos/${owner}/${repo}/builds/${number}/${ppid}`);
+	cancelBuild(owner, repo, number) {
+		return this._delete(`/api/repos/${owner}/${repo}/builds/${number}`);
 	}
 
 	/**
@@ -121,20 +112,26 @@ export default class DroneClient {
 	 * @param {string} repository owner.
 	 * @param {string} repository name.
 	 * @param {number} build number.
+	 * @param {number} stage number.
 	 */
-	approveBuild(owner, repo, build) {
-		return this._post(`/api/repos/${owner}/${repo}/builds/${build}/approve`);
+	approveBuild(owner, repo, build, stage) {
+		return this._post(
+			`/api/repos/${owner}/${repo}/builds/${build}/approve/${stage}`,
+		);
 	}
 
 	/**
-	 * Approves the build.
+	 * Declines the build.
 	 *
 	 * @param {string} repository owner.
 	 * @param {string} repository name.
 	 * @param {number} build number.
+	 * @param {number} stage number.
 	 */
-	declineBuild(owner, repo, build) {
-		return this._post(`/api/repos/${owner}/${repo}/builds/${build}/decline`);
+	declineBuild(owner, repo, build, stage) {
+		return this._post(
+			`/api/repos/${owner}/${repo}/builds/${build}/decline/${stage}`,
+		);
 	}
 
 	/**
@@ -156,36 +153,13 @@ export default class DroneClient {
 	 * @param {string} repository owner.
 	 * @param {string} repository name.
 	 * @param {number} build number.
-	 * @param {number} proc number.
+	 * @param {number} stage number.
+	 * @param {number} step number.
 	 */
-	getLogs(owner, repo, build, proc) {
-		return this._get(`/api/repos/${owner}/${repo}/logs/${build}/${proc}`);
-	}
-
-	/**
-	 * Returns the build artifact.
-	 *
-	 * @param {string} repository owner.
-	 * @param {string} repository name.
-	 * @param {number} build number.
-	 * @param {number} process number.
-	 * @param {String} file name.
-	 */
-	getArtifact(owner, repo, build, proc, file) {
+	getLogs(owner, repo, build, stage, step) {
 		return this._get(
-			`/api/repos/${owner}/${repo}/files/${build}/${proc}/${file}?raw=true`,
+			`/api/repos/${owner}/${repo}/builds/${build}/logs/${stage}/${step}`,
 		);
-	}
-
-	/**
-	 * Returns the build artifact.
-	 *
-	 * @param {string} repository owner.
-	 * @param {string} repository name.
-	 * @param {number} build number.
-	 */
-	getArtifactList(owner, repo, build) {
-		return this._get(`/api/repos/${owner}/${repo}/files/${build}`);
 	}
 
 	/**
@@ -272,7 +246,7 @@ export default class DroneClient {
 	 * @return {EventSource} event source object.
 	 */
 	on(callback) {
-		return this._subscribe("/stream/events", callback, {
+		return this._subscribe("/api/stream", callback, {
 			reconnect: true,
 		});
 	}
@@ -284,13 +258,14 @@ export default class DroneClient {
 	 * @param {string} repository owner.
 	 * @param {string} repository name.
 	 * @param {number} build number.
-	 * @param {number} process number.
+	 * @param {number} stage number.
+	 * @param {number} step number.
 	 * @param {function} callback function.
 	 * @return {EventSource} event source object.
 	 */
-	stream(owner, repo, build, proc, callback) {
+	stream(owner, repo, build, stage, step, callback) {
 		return this._subscribe(
-			`/stream/logs/${owner}/${repo}/${build}/${proc}`,
+			`/api/stream/${owner}/${repo}/${build}/${stage}/${step}`,
 			callback,
 			{
 				reconnect: false,
