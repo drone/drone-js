@@ -225,6 +225,13 @@ export default class DroneClient {
 	}
 
 	/**
+	 * Synchronizes and returns the updated repository list.
+	 */
+	synchronize() {
+		return this._post("/api/user/repos");
+	}
+
+	/**
 	 * Returns the currently authenticated user.
 	 */
 	getSelf() {

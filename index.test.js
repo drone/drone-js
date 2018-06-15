@@ -201,6 +201,12 @@ describe("Drone Client", () => {
 			mock.verify();
 		});
 
+		it("synchronize", () => {
+			mock.expects("_request").withArgs("POST", "/api/user/repos");
+			client.synchronize();
+			mock.verify();
+		});
+
 		it("getSelf", () => {
 			mock.expects("_request").withArgs("GET", "/api/user");
 			client.getSelf();
